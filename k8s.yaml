@@ -1,0 +1,135 @@
+# Kubernetes ConfigMap, Secret, Deployment and Service for the golang sse service
+# that is proxied by nginx to provide http2 support.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginxconf
+data:
+  nginx-selfsigned.crt: |
+    MIIDazCCAlOgAwIBAgIUbtDl39lE7Q3ohuau/9ajEF7sZugwDQYJKoZIhvcNAQEL
+    BQAwRTELMAkGA1UEBhMCRVMxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+    GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yMDExMDIxMDE5MjRaFw0yMTEx
+    MDIxMDE5MjRaMEUxCzAJBgNVBAYTAkVTMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw
+    HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEB
+    AQUAA4IBDwAwggEKAoIBAQDLpDcJiy/QF55jsKzkNe0miE4piVbxf1sYX0Nele3e
+    q3X3lB24saQDAWWbhuo0Ya5/lsrMZMQchdFn12EF6P8K7FJm0Je5aJzRnYch65xI
+    grThDft7IssgqjDMzvb0QGU4t9dygMYwOnImv0q1F0X2y4F2jar6E/0iOvsiqcCg
+    OZpvB/yJe7Rfqe76RudMm0wc+oeS59i5IcKZzGQiueCzrl3IL/7RzdJWHIM7EkC9
+    h3UL+VRue7ZgIkZJM+Jc2MVMheAkqRixNscd16LIEpHaeTfM6c+ZF6sNpdCLdne2
+    ERq+1YcgM5VitfUCcIWa6Zm8FynN6VjVOiR7PGrkncHjAgMBAAGjUzBRMB0GA1Ud
+    DgQWBBScDBKaaib7fPG/NSZN1a7ClYkx9TAfBgNVHSMEGDAWgBScDBKaaib7fPG/
+    NSZN1a7ClYkx9TAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCr
+    XdMTCk2k2qjlbIzXzJr73PKOBRVuIclJWOs+QdJJMPB+U6CzJGUMhuOZJQr9Y0iv
+    RwgZRXoBdeCXS3amSsK1Vvan0B7QwDjPy5ClJglWx3Txo8LlphR0HKRQjhOVMi5n
+    bY72PwK6QjFajpIu/aaFEhoFD+g7onnfk8Y535jnkCssO80oK+TspPRNV0oME0Ks
+    YeOJOOz3Ey+QXIZ5YGgeQNKLFnynZeJrQxpU2hFH8RdawaJtKtG6Z34KfBM8GWZQ
+    rfpQWeQUbBvU1+qs54TC+25nSLGkxgsgNF1DBo35nA7+phzaAK1oivyidQXFWk4y
+    6aGEJJBRjtMm2vERhmi9
+  default.conf: |
+      server {
+            listen 443 ssl http2;
+            ssl_certificate /etc/nginx/conf.d/nginx-selfsigned.crt;
+            ssl_certificate_key /etc/nginx/conf.d/private/nginx-selfsigned.key;
+
+            server_name  localhost;
+
+            location / {
+                  proxy_pass 'http://127.0.0.1:8080';
+                  proxy_set_header Connection '';
+                  proxy_http_version 1.1;
+                  chunked_transfer_encoding off;
+                  proxy_buffering off;
+                  proxy_cache off;
+              }
+      }
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nginxkey
+data:
+  nginx-selfsigned.key: |
+    MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDLpDcJiy/QF55j
+    sKzkNe0miE4piVbxf1sYX0Nele3eq3X3lB24saQDAWWbhuo0Ya5/lsrMZMQchdFn
+    12EF6P8K7FJm0Je5aJzRnYch65xIgrThDft7IssgqjDMzvb0QGU4t9dygMYwOnIm
+    v0q1F0X2y4F2jar6E/0iOvsiqcCgOZpvB/yJe7Rfqe76RudMm0wc+oeS59i5IcKZ
+    zGQiueCzrl3IL/7RzdJWHIM7EkC9h3UL+VRue7ZgIkZJM+Jc2MVMheAkqRixNscd
+    16LIEpHaeTfM6c+ZF6sNpdCLdne2ERq+1YcgM5VitfUCcIWa6Zm8FynN6VjVOiR7
+    PGrkncHjAgMBAAECggEBAJ8aDtILB/EZ8urKR1oJc95uEjtLjT0jFoYFL7p/gxg8
+    d+9Vrp71U0Hx3nPTxbnlM5OFua5VcA8k0gXCdZBLiK/9ESg5AsGeJR90ZvaugSz5
+    yd4nsXp0JaXAsl3huXn9sdfNcquIRs+5aiQxwmmX5Fa8isqYRqQZ5+TNlhZv8Ap9
+    cTELdg4Gxemmy892Lc26eVI2q1YTVQtBsjb0CtgiZBfMBaE4ONzPlniGTruR9bPi
+    o+ozu2Ae8C08RKTXQsw/HjYwpLirr500wPoxknwdcZc75lCXaJ0wnJFnPcdKwCPu
+    YnHfp71oLUmW+C1LA0ZY/sUx6zhrSW1mTCx5HO43FdkCgYEA9M0F+rKQ0f57mtIL
+    mpnLG12LctKbGkaRMMFaCKRPl2PzntR17qh+7y/mUNXiykQo+lWkeyetZ53oWfyV
+    zpcv56rBkssK57/pgmDx+GzQSdbH+50Gc0LNAqLOLW5ohwTptfjNDtjRnZXPPPP7
+    S4X5Gx37Mo6GhbSfIkNp6vSq5b8CgYEA1PUnmr+FDjmUalrEy5OWtBtNtxuhjvE+
+    XLch41wmqMFB2xllNStFUkrM+MOlesEu4hT7j6L6moNtfuFRun/y+qdWUvQDCKpd
+    OL5snoD1Ad7BzSf3CJQ4zNXMCXRvytSwbcG6U4uxsJiCDlhY/uYBfjYxH1vKtZsM
+    uWDjb859lN0CgYEA7MjvUqmr+OL9bihjfvvpgKPAAaWCzyyYvZ8YVimQru/IMsZw
+    +BLVDMi5L1FjV6AMPu/d9B3R1drgZ0IxKS4F8UCykimBd96ioDDjfBbMdc+hilg9
+    Z/miUT1mznzv8EGpShHJTuYcAyBn3x5j4I5LAJbEZgeESQoHrt2kMtbMAwMCgYAJ
+    Tm1cpeH6rSl/PFg9TUXYuRi8V8jHpmNDSf2BIhXOaiOmn4V8vVdaMUqj1Gj25FpY
+    JvKXZFfvSK8QTGh17gGAUq/DEEbRqiBIyomUo64RVtrBTG3PQir5SJ6SCzSXeJP9
+    N+ocnI43WXLVjabV/Ncz3MpoxGonZY84yrMlv7BdQQKBgQDJ3eUXzD6h/6tXJqAl
+    /LnMAfZeiIGJF6sSgb/2xIBBt59KScdv9/RN1bqo+O0a+v80Syusd4sSb5gnSjIp
+    +25wWQoqd4AnoLhCbxJA2w7YnwSeR4zkOxr+IuzkjhYp/dd4Ja2BhGU6jOqAsKVn
+    6CCDhSVW+mP58gBAhI1ylRWgMQ==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gosse
+  name: gosse-broker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gosse
+  template:
+    metadata:
+      labels:
+        app: gosse
+    spec:
+      containers:
+        - image: amelendres/gosse
+          name: gosse
+          ports:
+            - containerPort: 8080
+        - image: nginx
+          name: nginx
+          ports:
+            - containerPort: 443
+          volumeMounts:
+            - name: nginxconf-vol
+              mountPath: /etc/nginx/conf.d/
+            - name: nginxkey-vol
+              mountPath: /etc/nginx/conf.d/private/
+      volumes:
+        - name: nginxconf-vol
+          configMap:
+            name: nginxconf
+        - name: nginxkey-vol
+          secret:
+            secretName: nginxkey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gosse
+  name: gosse-service
+spec:
+  selector:
+    app: gosse
+  type: NodePort
+  ports:
+    - name: 443-port
+      port: 1443
+      protocol: TCP
+      targetPort: 443
+      nodePort: 30007
+

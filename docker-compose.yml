@@ -1,0 +1,18 @@
+version: "3.4"
+
+services:
+  broker:
+    build:
+      context: .
+    container_name: gosse
+    env_file:
+      .env
+    ports:
+      - "8080:8080"
+    networks:
+      - devom
+
+networks:
+  devom:
+    internal: true
+    
